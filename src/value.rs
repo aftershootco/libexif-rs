@@ -23,6 +23,7 @@ use internal::*;
 /// assert_eq!(42, ratio.numerator());
 /// assert_eq!(100, ratio.denominator());
 /// ```
+#[repr(C)]
 #[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]
 pub struct Rational<T>(pub T, pub T);
 

@@ -1,16 +1,15 @@
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
-use std::mem;
 use std::path::Path;
 use std::slice;
 
 use exif_sys::*;
 
-use loader::Loader;
-use content::Content;
 use bits::*;
+use content::Content;
 use internal::*;
+use loader::Loader;
 
 /// Container for all EXIF data found in an image.
 pub struct Data {
@@ -20,7 +19,7 @@ pub struct Data {
 impl FromLibExif<*mut ExifData> for Data {
     fn from_libexif(ptr: *mut ExifData) -> Data {
         Data {
-            inner: unsafe { mem::transmute(ptr) }
+            inner: unsafe { &mut *ptr },
         }
     }
 }
@@ -36,17 +35,15 @@ impl Drop for Data {
 impl Data {
     /// Construct a new EXIF data container with EXIF data from a JPEG file.
     pub fn open<P: AsRef<Path>>(path: P) -> io::Result<Data> {
-        let mut file = try!(File::open(path));
+        let mut file = File::open(path)?;
         let mut loader = Loader::new();
         let mut buffer = Vec::<u8>::with_capacity(1024);
 
         loop {
-            let mut read_buf = unsafe {
-                slice::from_raw_parts_mut(buffer.as_mut_ptr(),
-                                          buffer.capacity())
-            };
+            let read_buf =
+                unsafe { slice::from_raw_parts_mut(buffer.as_mut_ptr(), buffer.capacity()) };
 
-            let len = try!(file.read(&mut read_buf));
+            let len = file.read(read_buf)?;
 
             unsafe {
                 buffer.set_len(len);
@@ -57,7 +54,9 @@ impl Data {
             }
         }
 
-        loader.data().ok_or(io::Error::new(io::ErrorKind::InvalidData, "invalid EXIF data"))
+        loader
+            .data()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "invalid EXIF data"))
     }
 
     /// Return the byte order in use by this EXIF data.
@@ -103,7 +102,7 @@ impl Data {
     }
 
     /// Iterate over the contents of the EXIF data.
-    pub fn contents<'a>(&'a self) -> impl ExactSizeIterator<Item=Content<'a>> {
+    pub fn contents(&self) -> impl ExactSizeIterator<Item = Content> {
         Contents {
             contents: &self.inner.ifd[..],
             index: 0,
@@ -138,9 +137,8 @@ impl<'a> Iterator for Contents<'a> {
             let content = self.contents[self.index];
             self.index += 1;
 
-            Some(Content::from_libexif(unsafe { mem::transmute(content) }))
-        }
-        else {
+            Some(Content::from_libexif(unsafe { &mut *content }))
+        } else {
             None
         }
     }
