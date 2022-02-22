@@ -5,8 +5,8 @@ use std::mem;
 use libc::{self, c_char};
 use exif_sys::*;
 
-use bits::*;
-use internal::*;
+use crate::bits::*;
+use crate::internal::*;
 
 /// A rational number consisting of a numerator and denominator.
 ///

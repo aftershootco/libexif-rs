@@ -1,8 +1,8 @@
 use libc::c_uint;
 use exif_sys::*;
 
-use data::Data;
-use internal::*;
+use crate::data::Data;
+use crate::internal::*;
 
 pub struct Loader {
     inner: *mut ExifLoader,

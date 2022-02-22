@@ -23,8 +23,8 @@
 //! }
 //! ```
 
-extern crate exif_sys;
-extern crate libc;
+// extern crate exif_sys;
+// extern crate libc;
 
 pub use bits::*;
 pub use content::*;
@@ -32,6 +32,7 @@ pub use data::*;
 pub use entry::*;
 pub use tag::*;
 pub use value::*;
+pub use writer::*;
 
 mod internal;
 
@@ -42,3 +43,4 @@ mod entry;
 mod loader;
 mod tag;
 mod value;
+mod writer;

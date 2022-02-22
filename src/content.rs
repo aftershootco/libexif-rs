@@ -2,9 +2,9 @@ use std::slice;
 
 use exif_sys::*;
 
-use bits::*;
-use entry::Entry;
-use internal::*;
+use crate::bits::*;
+use crate::entry::Entry;
+use crate::internal::*;
 
 /// Container for all EXIF data in a single [IFD](enum.IFD.html).
 pub struct Content<'a> {

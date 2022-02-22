@@ -1,6 +1,6 @@
 use exif_sys::*;
 
-use internal::*;
+use crate::internal::*;
 
 /// Defines the byte order of binary values.
 #[derive(Debug,PartialEq,Eq,Clone,Copy,Hash)]

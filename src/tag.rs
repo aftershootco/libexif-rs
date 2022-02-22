@@ -2,8 +2,8 @@ use std::ffi::CStr;
 
 use exif_sys::*;
 
-use bits::*;
-use internal::*;
+use crate::bits::*;
+use crate::internal::*;
 
 /// EXIF tag.
 pub struct Tag {

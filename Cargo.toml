@@ -1,6 +1,7 @@
 [package]
 name = "exif"
 version = "0.0.1"
+edition = "2021"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
 description = "Rust wrapper for libexif"
 homepage = "https://gitlab.com/dcuddeback/exif"
@@ -10,5 +11,5 @@ readme = "README.md"
 keywords = ["libexif", "EXIF", "image"]
 
 [dependencies]
-exif-sys = "0.1"
+exif-sys = { path = "../libexif-sys/" }
 libc = "0.2"

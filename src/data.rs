@@ -6,10 +6,10 @@ use std::slice;
 
 use exif_sys::*;
 
-use bits::*;
-use content::Content;
-use internal::*;
-use loader::Loader;
+use crate::bits::*;
+use crate::content::Content;
+use crate::internal::*;
+use crate::loader::Loader;
 
 /// Container for all EXIF data found in an image.
 pub struct Data {

@@ -5,10 +5,10 @@ use libc::{self, c_char, c_uint};
 
 use exif_sys::*;
 
-use tag::Tag;
-use value::Value;
-use bits::*;
-use internal::*;
+use crate::tag::Tag;
+use crate::value::Value;
+use crate::bits::*;
+use crate::internal::*;
 
 /// Data found in a single EXIF tag.
 pub struct Entry<'a> {
