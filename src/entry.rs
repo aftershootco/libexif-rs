@@ -3,7 +3,7 @@ use std::slice;
 
 use libc::{self, c_char, c_uint};
 
-use exif_sys::*;
+use crate::bindings::*;
 
 use crate::tag::Tag;
 use crate::value::Value;

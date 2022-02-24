@@ -23,9 +23,6 @@
 //! }
 //! ```
 
-// extern crate exif_sys;
-// extern crate libc;
-
 pub use bits::*;
 pub use content::*;
 pub use data::*;
@@ -36,6 +33,7 @@ pub use writer::*;
 
 mod internal;
 
+pub mod bindings; // Just in case someone wants access to the raw bindings
 mod bits;
 mod content;
 mod data;

@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::slice;
 
-use exif_sys::*;
+use crate::bindings::*;
 
 use crate::bits::*;
 use crate::content::Content;
@@ -32,7 +32,19 @@ impl Drop for Data {
     }
 }
 
+impl Default for Data {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Data {
+    /// Create an empty  EXIF data
+    pub fn new() -> Self {
+        let inner = unsafe { &mut *exif_data_new() };
+        Self { inner }
+    }
+
     /// Construct a new EXIF data container with EXIF data from a JPEG file.
     pub fn open<P: AsRef<Path>>(path: P) -> io::Result<Data> {
         let mut file = File::open(path)?;
@@ -49,7 +61,7 @@ impl Data {
                 buffer.set_len(len);
             }
 
-            if !loader.write_data(&buffer) {
+            if !loader.write_data(&mut buffer) {
                 break;
             }
         }
@@ -107,6 +119,17 @@ impl Data {
             contents: &self.inner.ifd[..],
             index: 0,
         }
+    }
+
+    /// # Saftey
+    ///
+    /// This function returns the bytes of the in memory representation of ExifData
+    /// Return ExifData struct as bytes
+    pub unsafe fn as_bytes(&'_ self) -> &[u8] {
+        unsafe fn as_slice<T: Sized>(p: &T) -> &[u8] {
+            ::std::slice::from_raw_parts((p as *const T) as *const u8, ::std::mem::size_of::<T>())
+        }
+        as_slice(self.inner)
     }
 
     /// Fix the EXIF data to make it compatible with the EXIF specification.

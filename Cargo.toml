@@ -9,7 +9,11 @@ repository = "https://gitlab.com/dcuddeback/exif"
 license = "MIT"
 readme = "README.md"
 keywords = ["libexif", "EXIF", "image"]
+build = "build.rs"
 
 [dependencies]
-exif-sys = { path = "../libexif-sys/" }
 libc = "0.2"
+
+[build-dependencies]
+autotools = "0.2.4"
+bindgen = "0.59.2"

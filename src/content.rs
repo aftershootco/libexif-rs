@@ -1,6 +1,6 @@
 use std::slice;
 
-use exif_sys::*;
+use crate::bindings::*;
 
 use crate::bits::*;
 use crate::entry::Entry;

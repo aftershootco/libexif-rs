@@ -3,7 +3,7 @@ use std::fmt::{self, Display, Formatter};
 use std::mem;
 
 use libc::{self, c_char};
-use exif_sys::*;
+use crate::bindings::*;
 
 use crate::bits::*;
 use crate::internal::*;

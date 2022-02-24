@@ -1,5 +1,5 @@
+use crate::bindings::*;
 use libc::c_uint;
-use exif_sys::*;
 
 use crate::data::Data;
 use crate::internal::*;
@@ -30,17 +30,12 @@ impl Loader {
 
         if !ptr.is_null() {
             Some(Data::from_libexif(ptr))
-        }
-        else {
+        } else {
             None
         }
     }
 
-    pub fn write_data(&mut self, data: &[u8]) -> bool {
-        unsafe {
-            exif_loader_write(self.inner,
-                              data.as_ptr(),
-                              data.len() as c_uint) != 0
-        }
+    pub fn write_data(&mut self, data: &mut [u8]) -> bool {
+        unsafe { exif_loader_write(self.inner, data.as_mut_ptr(), data.len() as c_uint) != 0 }
     }
 }

@@ -1,6 +1,6 @@
 use std::ffi::CStr;
 
-use exif_sys::*;
+use crate::bindings::*;
 
 use crate::bits::*;
 use crate::internal::*;
