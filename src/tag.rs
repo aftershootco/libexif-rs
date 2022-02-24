@@ -16,6 +16,12 @@ impl FromLibExif<ExifTag> for Tag {
     }
 }
 
+impl ToLibExif<ExifTag> for Tag {
+    fn to_libexif(&self) -> ExifTag {
+        self.inner
+    }
+}
+
 impl Tag {
     /// The name of the EXIF tag when found in the given IFD.
     pub fn name(&self, ifd: IFD) -> &'static str {
@@ -52,9 +58,7 @@ impl Tag {
     /// This method returns the tag's support level according to the EXIF specification.
     pub fn support_level(&self, ifd: IFD, encoding: DataEncoding) -> SupportLevel {
         let support_level = unsafe {
-            exif_tag_get_support_level_in_ifd(self.inner,
-                                              ifd.to_libexif(),
-                                              encoding.to_libexif())
+            exif_tag_get_support_level_in_ifd(self.inner, ifd.to_libexif(), encoding.to_libexif())
         };
 
         SupportLevel::from_libexif(support_level)

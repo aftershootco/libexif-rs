@@ -2,7 +2,6 @@
 name = "exif"
 version = "0.0.1"
 edition = "2021"
-authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
 description = "Rust wrapper for libexif"
 homepage = "https://gitlab.com/dcuddeback/exif"
 repository = "https://gitlab.com/dcuddeback/exif"

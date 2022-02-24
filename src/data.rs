@@ -5,12 +5,13 @@ use std::path::Path;
 use std::slice;
 
 use crate::bindings::*;
-
 use crate::bits::*;
 use crate::content::Content;
 use crate::entry::Entry;
+use crate::error::ExifError;
 use crate::internal::*;
 use crate::loader::Loader;
+use crate::value::Value;
 
 /// Container for all EXIF data found in an image.
 pub struct Data {
@@ -22,6 +23,12 @@ impl FromLibExif<*mut ExifData> for Data {
         Data {
             inner: unsafe { &mut *ptr },
         }
+    }
+}
+
+impl ToLibExif<ExifData> for Data {
+    fn to_libexif(&self) -> ExifData {
+        *self.inner
     }
 }
 
@@ -119,16 +126,55 @@ impl Data {
         &self,
         ifd: impl ToLibExif<ExifIfd>,
         tag: ExifTag,
-    ) -> Result<Entry, crate::Error> {
+    ) -> Result<Entry, ExifError> {
         // The C call to this function
         // exif_content_get_entry(exif->ifd[ifd], tag)
         let entry_ptr =
             unsafe { exif_content_get_entry(self.inner.ifd[ifd.to_libexif() as usize], tag) };
         if entry_ptr.is_null() {
-            Err(crate::Error::EntryNotFound)
+            Err(ExifError::EntryNotFound)
         } else {
             Ok(Entry::from_libexif(unsafe { &mut *entry_ptr }))
         }
+    }
+
+    /// Set an entry
+    pub fn set_entry<T>(
+        &mut self,
+        ifd: impl ToLibExif<ExifIfd> + Clone,
+        // tag: impl ToLibExif<ExifTag>,
+        tag: ExifTag,
+        value: Value,
+    ) -> Result<(), ExifError> {
+        // First check if the entry exists
+        if self.get_entry(ifd.clone(), tag).is_ok() {
+            todo!()
+        } else {
+            // Allocate a new entry
+            let entry = unsafe { exif_entry_new() };
+            // If OOM it may return null
+            if entry.is_null() {
+                return Err(ExifError::EntryNewFail);
+            }
+
+            // tag must be set before calling exif_content_add_entry
+            unsafe { *entry }.tag = tag;
+
+            // Attach the ExifEntry to IFD
+            unsafe { exif_content_add_entry(self.inner.ifd[ifd.to_libexif() as usize], entry) };
+            // Allocate memory for the entry and fill with default data
+            unsafe { exif_entry_initialize(entry, tag) };
+
+            /* Ownership of the ExifEntry has now been passed to the IFD.
+             * One must be very careful in accessing a structure after
+             * unref'ing it; in this case, we know "entry" won't be freed
+             * because the reference count was bumped when it was added to
+             * the IFD.
+             */
+            unsafe { exif_entry_unref(entry) };
+        }
+
+        Ok(())
     }
 
     /// Iterate over the contents of the EXIF data.
@@ -139,15 +185,9 @@ impl Data {
         }
     }
 
-    /// # Saftey
-    ///
-    /// This function returns the bytes of the in memory representation of ExifData
-    /// Return ExifData struct as bytes
-    pub fn as_bytes(&'_ self) -> &[u8] {
-        unsafe fn as_slice<T: Sized>(p: &T) -> &[u8] {
-            ::std::slice::from_raw_parts((p as *const T) as *const u8, ::std::mem::size_of::<T>())
-        }
-        unsafe { as_slice(self.inner) }
+    /// Return the raw binary data for the ExifData
+    pub fn raw_data(&self) -> &[u8] {
+        unsafe { slice::from_raw_parts(self.inner.data, self.inner.size as usize) }
     }
 
     /// Fix the EXIF data to make it compatible with the EXIF specification.
