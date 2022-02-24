@@ -27,6 +27,7 @@ pub use bits::*;
 pub use content::*;
 pub use data::*;
 pub use entry::*;
+pub use error::*;
 pub use tag::*;
 pub use value::*;
 pub use writer::*;
@@ -34,6 +35,8 @@ pub use writer::*;
 mod internal;
 
 pub mod bindings; // Just in case someone wants access to the raw bindings
+pub mod error;
+
 mod bits;
 mod content;
 mod data;

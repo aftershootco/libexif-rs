@@ -8,6 +8,7 @@ use crate::bindings::*;
 
 use crate::bits::*;
 use crate::content::Content;
+use crate::entry::Entry;
 use crate::internal::*;
 use crate::loader::Loader;
 
@@ -113,6 +114,23 @@ impl Data {
         }
     }
 
+    /// Get a Entry
+    pub fn get_entry(
+        &self,
+        ifd: impl ToLibExif<ExifIfd>,
+        tag: ExifTag,
+    ) -> Result<Entry, crate::Error> {
+        // The C call to this function
+        // exif_content_get_entry(exif->ifd[ifd], tag)
+        let entry_ptr =
+            unsafe { exif_content_get_entry(self.inner.ifd[ifd.to_libexif() as usize], tag) };
+        if entry_ptr.is_null() {
+            Err(crate::Error::EntryNotFound)
+        } else {
+            Ok(Entry::from_libexif(unsafe { &mut *entry_ptr }))
+        }
+    }
+
     /// Iterate over the contents of the EXIF data.
     pub fn contents(&self) -> impl ExactSizeIterator<Item = Content> {
         Contents {
@@ -125,11 +143,11 @@ impl Data {
     ///
     /// This function returns the bytes of the in memory representation of ExifData
     /// Return ExifData struct as bytes
-    pub unsafe fn as_bytes(&'_ self) -> &[u8] {
+    pub fn as_bytes(&'_ self) -> &[u8] {
         unsafe fn as_slice<T: Sized>(p: &T) -> &[u8] {
             ::std::slice::from_raw_parts((p as *const T) as *const u8, ::std::mem::size_of::<T>())
         }
-        as_slice(self.inner)
+        unsafe { as_slice(self.inner) }
     }
 
     /// Fix the EXIF data to make it compatible with the EXIF specification.

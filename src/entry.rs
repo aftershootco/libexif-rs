@@ -11,6 +11,7 @@ use crate::bits::*;
 use crate::internal::*;
 
 /// Data found in a single EXIF tag.
+#[derive(Debug)]
 pub struct Entry<'a> {
     inner: &'a mut ExifEntry,
 }
