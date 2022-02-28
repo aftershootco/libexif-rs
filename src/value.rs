@@ -1,3 +1,4 @@
+use libc::{self, c_char};
 use std::ffi::CString;
 use std::fmt::{self, Display, Formatter};
 use std::mem;
@@ -326,14 +327,11 @@ fn insert_text(
 }
 
 fn extract_text(raw_data: &[u8], components: usize, byte_order: ByteOrder) -> String {
-    let vec = extract_vec::<u8>(raw_data, components, byte_order, get_u8);
+    let mut vec = extract_vec::<u8>(raw_data, components, byte_order, get_u8);
 
     let cstring = unsafe {
-        // Dunno why but I can't set the size to text.len() + 1 so I can't seem to include the 0
-        // byte into the thing
-        //
-        // let len = libc::strlen(vec.as_ptr() as *const c_char);
-        // vec.set_len(len);
+        let len = libc::strlen(vec.as_ptr() as *const c_char);
+        vec.set_len(len);
 
         CString::from_vec_unchecked(vec)
     };
