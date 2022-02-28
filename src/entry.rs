@@ -4,8 +4,8 @@ use std::slice;
 use libc::{self, c_char, c_uint};
 
 use crate::bindings::*;
-
 use crate::bits::*;
+use crate::error::ExifError;
 use crate::internal::*;
 use crate::tag::Tag;
 use crate::value::Value;
@@ -60,7 +60,7 @@ impl<'a> Entry<'a> {
     }
 
     /// Returns a textual representation of the entry's data.
-    pub fn text_value(&self) -> String {
+    pub fn text_value(&self) -> Result<String, ExifError> {
         let mut buffer = Vec::<u8>::with_capacity(256);
 
         let cstring = unsafe {
@@ -75,6 +75,9 @@ impl<'a> Entry<'a> {
             CString::from_vec_unchecked(buffer)
         };
 
-        cstring.into_string().expect("invalid UTF-8")
+        Ok(cstring.into_string()?)
+    }
+    pub fn format(&self) -> Result<ExifFormat, ExifError> {
+        Ok(self.inner.format)
     }
 }

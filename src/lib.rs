@@ -23,6 +23,9 @@
 //! }
 //! ```
 
+#[macro_use]
+extern crate paste;
+
 pub use bits::*;
 pub use content::*;
 pub use data::*;
@@ -30,7 +33,6 @@ pub use entry::*;
 pub use error::*;
 pub use tag::*;
 pub use value::*;
-pub use writer::*;
 
 mod internal;
 
@@ -44,4 +46,3 @@ mod entry;
 mod loader;
 mod tag;
 mod value;
-mod writer;

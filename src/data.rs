@@ -13,6 +13,9 @@ use crate::internal::*;
 use crate::loader::Loader;
 use crate::value::Value;
 
+pub const EXIF_HEADER: [u8; 4] = [0xff, 0xd8, 0xff, 0xe1];
+pub const JPEG_HEADER: [u8; 4] = [0xff, 0xd8, 0xff, 0xe0];
+
 /// Container for all EXIF data found in an image.
 pub struct Data {
     inner: &'static mut ExifData,
@@ -54,7 +57,7 @@ impl Data {
     }
 
     /// Construct a new EXIF data container with EXIF data from a JPEG file.
-    pub fn open<P: AsRef<Path>>(path: P) -> io::Result<Data> {
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<Data, ExifError> {
         let mut file = File::open(path)?;
         let mut loader = Loader::new();
         let mut buffer = Vec::<u8>::with_capacity(1024);
@@ -76,7 +79,7 @@ impl Data {
 
         loader
             .data()
-            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "invalid EXIF data"))
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "invalid EXIF data").into())
     }
 
     /// Return the byte order in use by this EXIF data.
@@ -131,6 +134,8 @@ impl Data {
         // exif_content_get_entry(exif->ifd[ifd], tag)
         let entry_ptr =
             unsafe { exif_content_get_entry(self.inner.ifd[ifd.to_libexif() as usize], tag) };
+
+
         if entry_ptr.is_null() {
             Err(ExifError::EntryNotFound)
         } else {
@@ -138,40 +143,78 @@ impl Data {
         }
     }
 
+    pub fn get_entry_raw(
+        &self,
+        ifd: impl ToLibExif<ExifIfd>,
+        tag: ExifTag,
+    ) -> Result<&mut ExifEntry, ExifError> {
+        let entry_ptr =
+            unsafe { exif_content_get_entry(self.inner.ifd[ifd.to_libexif() as usize], tag) };
+        if entry_ptr.is_null() {
+            Err(ExifError::EntryNotFound)
+        } else {
+            Ok(unsafe { &mut *entry_ptr })
+        }
+    }
+
     /// Set an entry
-    pub fn set_entry<T>(
+    pub fn set_entry(
         &mut self,
-        ifd: impl ToLibExif<ExifIfd> + Clone,
+        ifd: IFD,
         // tag: impl ToLibExif<ExifTag>,
         tag: ExifTag,
         value: Value,
+        order: ByteOrder,
     ) -> Result<(), ExifError> {
+        // First calculate the components, size, and format of the value
+        let (components, size, format) = value.get_components_size_format()?;
+        let tag_name_ptr = unsafe { exif_tag_get_title_in_ifd(tag, ifd.to_libexif()) };
+
+
+        // Check if the tag is unknown
+        if tag_name_ptr.is_null() {
+            return Err(ExifError::TagNotInIfd(tag, ifd));
+        }
+
         // First check if the entry exists
-        if self.get_entry(ifd.clone(), tag).is_ok() {
-            todo!()
-        } else {
-            // Allocate a new entry
-            let entry = unsafe { exif_entry_new() };
-            // If OOM it may return null
-            if entry.is_null() {
-                return Err(ExifError::EntryNewFail);
+        if let Ok(entry) = self.get_entry_raw(ifd, tag) {
+            // Check if the format matches the entry
+            if entry.format != format {
+                return Err(ExifError::FormatMismatch(entry.format, format));
             }
 
-            // tag must be set before calling exif_content_add_entry
-            unsafe { *entry }.tag = tag;
+            // Check if the memory need reallocation
+            if entry.size != (components * size) as u32 {
+                let mem = unsafe { exif_mem_new_default() };
+                if mem.is_null() {
+                    return Err(ExifError::MemNewFail);
+                }
 
-            // Attach the ExifEntry to IFD
-            unsafe { exif_content_add_entry(self.inner.ifd[ifd.to_libexif() as usize], entry) };
-            // Allocate memory for the entry and fill with default data
-            unsafe { exif_entry_initialize(entry, tag) };
+                unsafe {
+                    entry.size = (components * size) as u32;
+                    entry.components = components as u64;
+                    exif_mem_realloc(
+                        mem,
+                        entry.data as *mut libc::c_void,
+                        (components * size) as u32,
+                    );
+                    // exif_content_add_entry(self.to_libexif().ifd[ifd.to_libexif() as usize], entry);
+                    exif_mem_unref(mem);
+                };
+            }
 
-            /* Ownership of the ExifEntry has now been passed to the IFD.
-             * One must be very careful in accessing a structure after
-             * unref'ing it; in this case, we know "entry" won't be freed
-             * because the reference count was bumped when it was added to
-             * the IFD.
-             */
-            unsafe { exif_entry_unref(entry) };
+            value.insert(*entry, components, order)?;
+        } else {
+            let entry = crate::tag::create_tag(
+                self.to_libexif(),
+                ifd,
+                tag,
+                components as u64,
+                (components * size) as u32,
+                format,
+            )?;
+
+            value.insert(entry, components, order)?;
         }
 
         Ok(())
@@ -202,6 +245,73 @@ impl Data {
         unsafe {
             exif_data_dump(self.inner as *const _ as *mut _);
         }
+    }
+
+    pub fn write_from_file(
+        &mut self,
+        from: impl AsRef<Path>,
+        to: impl AsRef<Path>,
+    ) -> Result<(), ExifError> {
+        let old_buffer = std::fs::read(from)?;
+        self.write(old_buffer, to)
+    }
+
+    pub fn write(
+        &mut self,
+        old_buffer: impl AsRef<[u8]>,
+        to: impl AsRef<Path>,
+    ) -> Result<(), ExifError> {
+        let mut exif_data: *mut u8 = std::ptr::null_mut();
+        let mut exif_data_len: u32 = 0;
+        unsafe {
+            exif_data_fix(self.inner);
+            exif_data_save_data(self.inner, &mut exif_data, &mut exif_data_len);
+        }
+        if exif_data.is_null() {
+            return Err(ExifError::ExifDataNull);
+        }
+        if exif_data_len == 0 {
+            return Err(ExifError::ExifDataLenZero);
+        }
+        let exif_data: &[u8] =
+            unsafe { std::slice::from_raw_parts_mut(exif_data, exif_data_len as usize) };
+
+        // let old_jpeg = std::fs::read(from)?;
+        let old_buffer = old_buffer.as_ref();
+
+        let skip = if old_buffer.starts_with(&EXIF_HEADER) {
+            // Skip the size of the exif header which is a 2 byte big-endian number
+            //
+            // NOTE: In the original library they take a u32 and the bitshift it by 8
+            // and then and it by 0xff to get the big-endian bytes for a u16 so I just calculated
+            // it as a u16
+            let skip_data: &[u8; 2] = old_buffer[4..=5].try_into().unwrap();
+            u16::from_be_bytes(*skip_data) as usize + 4
+        } else if old_buffer.starts_with(&JPEG_HEADER) {
+            // Skip 4 bytes if the buffer contains a normal jpeg file
+            4
+        } else {
+            // If the user already skipped the headers themselves
+            0
+        };
+
+        // Size of the exif header is 4 bytes
+        // and u16::MAX = 65536 so that's 8KiB of data for a single ExifData block
+        // FIXME handle exif size with greater than 8KiB of data
+        // let skip =
+
+        let jpeg_data_old = &old_buffer[skip..];
+        let exif_data_len = exif_data_len as u16 + 2;
+
+        let mut jpeg_buffer = Vec::new();
+        jpeg_buffer.write_all(&EXIF_HEADER)?;
+        jpeg_buffer.write_all(&exif_data_len.to_be_bytes())?;
+        jpeg_buffer.write_all(exif_data)?;
+        jpeg_buffer.write_all(jpeg_data_old)?;
+
+        let mut file = std::fs::File::create(to)?;
+        file.write_all(&jpeg_buffer)?;
+        Ok(())
     }
 }
 
