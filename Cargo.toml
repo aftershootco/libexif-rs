@@ -1,10 +1,10 @@
 [package]
-name = "exif"
-version = "0.0.1"
+name = "libexif"
+version = "0.0.2"
 edition = "2021"
 description = "Rust wrapper for libexif"
-homepage = "https://gitlab.com/dcuddeback/exif"
-repository = "https://gitlab.com/dcuddeback/exif"
+homepage = "https://github.com/aftershootco/libexif-rs"
+repository = "https://github.com/aftershootco/libexif-rs"
 license = "MIT"
 readme = "README.md"
 keywords = ["libexif", "EXIF", "image"]
@@ -20,3 +20,5 @@ autotools = "0.2.4"
 bindgen = "0.59.2"
 
 [features]
+default = ['static']
+static = []

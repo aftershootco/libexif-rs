@@ -55,16 +55,22 @@ fn main() {
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let out_dir = Path::new(&out_dir);
     clone(out_dir);
+    #[cfg(feature = "static")]
     let dst = Config::new("libexif")
         .reconf("--install")
         .enable("static", None)
         .build();
+    #[cfg(not(feature = "static"))]
+    let dst = Config::new("libexif").reconf("--install").build();
 
     generate_bindings(out_dir);
     println!(
         "cargo:rustc-link-search=native={}",
         dst.join("lib").display()
     );
+    #[cfg(feature = "static")]
     println!("cargo:rustc-link-lib=static=exif");
+    #[cfg(not(feature = "static"))]
+    println!("cargo:rustc-link-lib=exif");
     println!("cargo:rerun-if-changed=build.rs");
 }

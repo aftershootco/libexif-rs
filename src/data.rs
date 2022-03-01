@@ -135,7 +135,6 @@ impl Data {
         let entry_ptr =
             unsafe { exif_content_get_entry(self.inner.ifd[ifd.to_libexif() as usize], tag) };
 
-
         if entry_ptr.is_null() {
             Err(ExifError::EntryNotFound)
         } else {
@@ -169,7 +168,6 @@ impl Data {
         // First calculate the components, size, and format of the value
         let (components, size, format) = value.get_components_size_format()?;
         let tag_name_ptr = unsafe { exif_tag_get_title_in_ifd(tag, ifd.to_libexif()) };
-
 
         // Check if the tag is unknown
         if tag_name_ptr.is_null() {
@@ -279,7 +277,7 @@ impl Data {
         // let old_jpeg = std::fs::read(from)?;
         let old_buffer = old_buffer.as_ref();
 
-        let skip = if old_buffer.starts_with(&EXIF_HEADER) {
+        let skip = if old_buffer.starts_with(&EXIF_HEADER) || old_buffer.starts_with(&JPEG_HEADER) {
             // Skip the size of the exif header which is a 2 byte big-endian number
             //
             // NOTE: In the original library they take a u32 and the bitshift it by 8
@@ -287,9 +285,6 @@ impl Data {
             // it as a u16
             let skip_data: &[u8; 2] = old_buffer[4..=5].try_into().unwrap();
             u16::from_be_bytes(*skip_data) as usize + 4
-        } else if old_buffer.starts_with(&JPEG_HEADER) {
-            // Skip 4 bytes if the buffer contains a normal jpeg file
-            4
         } else {
             // If the user already skipped the headers themselves
             0
