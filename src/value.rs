@@ -135,7 +135,38 @@ impl From<String> for Value {
         Self::Text(value)
     }
 }
+
+macro_rules! unwrap_value {
+    (
+        $(
+            $type_name: ident, $data_type: ident => $interal_type: ty,
+        )*
+    ) => {
+        $(
+            paste! {
+                pub fn [<unwrap_$type_name>](&self) -> $interal_type {
+                    match self {
+                        Self::$data_type(val) => val.to_owned(),
+                        _ => panic!("Value was not of type {}", stringify!($data_type) ),
+                    }
+                }
+            }
+        )*
+    }
+
+}
+
 impl Value {
+    unwrap_value! {
+        u8, U8 => Vec<u8>,
+        i8, I8 => Vec<i8>,
+        u16, U16 => Vec<u16>,
+        i16, I16 => Vec<i16>,
+        u32, U32 => Vec<u32>,
+        i32, I32 => Vec<i32>,
+        undefined, Undefined => Vec<u8>,
+        text, Text => String,
+    }
     pub(crate) fn extract(
         raw_data: &[u8],
         data_type: DataType,
