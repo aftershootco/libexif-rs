@@ -94,7 +94,6 @@ fn main() {
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let out_dir = Path::new(&out_dir);
     std::env::set_current_dir(out_dir).unwrap();
-
     // const LIBEXIF_LINK: &str =
     // "https://github.com/libexif/libexif/releases/download/v0.6.24/libexif-0.6.24.zip";
     let libexif_link = format!(
