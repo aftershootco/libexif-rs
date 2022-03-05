@@ -18,6 +18,9 @@ thiserror = "1.0.30"
 [build-dependencies]
 autotools = "0.2.4"
 bindgen = "0.59.2"
+http_req = "0.8.1"
+sha256 = "1.0.3"
+zip = "0.5.13"
 
 [features]
 default = ['static']
