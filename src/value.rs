@@ -293,7 +293,8 @@ impl Value {
                     }
                     Ok(())
                 })?;
-                (data.len() + 3, 1, ExifFormat::EXIF_FORMAT_ASCII)
+                // (data.len() + 3, 1, ExifFormat::EXIF_FORMAT_ASCII)
+                (data.len() + 3, 1, ExifFormat::EXIF_FORMAT_UNDEFINED)
             }
         })
     }
