@@ -29,4 +29,4 @@ jobs:
           echo '<meta http-equiv = "refresh" content = "0; url = libexif/index.html" />' >> docs/index.html
           git add docs
           git commit -am "Generated docs"
-          git push
+          git push -u origin gh-pages
