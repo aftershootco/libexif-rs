@@ -6,8 +6,8 @@
 //! ```
 //! # use std::io;
 //! # use std::path::Path;
-//! fn dump_exif<P: AsRef<Path>>(file_name: P) -> io::Result<()> {
-//!     let data = try!(exif::Data::open("image.jpg"));
+//! fn dump_exif<P: AsRef<Path>>(file_name: P) -> Result<(), libexif::ExifError> {
+//!     let data = libexif::Data::open("image.jpg")?;
 //!
 //!     for content in data.contents() {
 //!         println!("[{:=>32}{:=>46}]", format!(" {:?} ", content.ifd()), "");
@@ -15,7 +15,7 @@
 //!         for entry in content.entries() {
 //!             println!("  {:<30} = {}",
 //!                      entry.tag().title(content.ifd()),
-//!                      entry.text_value());
+//!                      entry.text_value()?);
 //!         }
 //!     }
 //!
@@ -36,7 +36,9 @@ pub use value::*;
 
 mod internal;
 
-pub mod bindings; // Just in case someone wants access to the raw bindings
+// pub mod bindings; // Just in case someone wants access to the raw bindings
+mod bindings;
+pub use bindings::{ExifEntry, ExifIfd, ExifTag};
 pub mod error;
 
 mod bits;

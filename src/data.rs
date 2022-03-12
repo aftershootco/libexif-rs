@@ -125,6 +125,16 @@ impl Data {
     }
 
     /// Get a Entry
+    ///
+    ///# Example
+    /// ```rust
+    ///     use libexif::{IFD, ExifTag, ByteOrder, Data};
+    ///     let mut data = Data::open("assets/file.jpg").unwrap();
+    ///     let _ = data
+    ///         .get_entry(IFD::Image, ExifTag::EXIF_TAG_X_RESOLUTION)
+    ///         .unwrap()
+    ///         .value(ByteOrder::LittleEndian);
+    /// ```
     pub fn get_entry(
         &self,
         ifd: impl ToLibExif<ExifIfd>,
@@ -142,6 +152,10 @@ impl Data {
         }
     }
 
+    /// Returns a raw entry directly from the C bindings without any wrapper
+    /// Same as get_entry().inner
+    /// # Saftey
+    /// This method dereferences a raw pointer
     pub fn get_entry_raw(
         &self,
         ifd: impl ToLibExif<ExifIfd>,
@@ -157,6 +171,19 @@ impl Data {
     }
 
     /// Set an entry
+    ///
+    /// Example
+    /// ```rust
+    /// use libexif::{IFD, ExifTag, ByteOrder, Data, Value};
+    /// let mut data = Data::open("assets/file.jpg").unwrap();
+    /// data.set_entry(
+    ///     IFD::Image,
+    ///     ExifTag::EXIF_TAG_ORIENTATION,
+    ///     Value::U16(vec![100u16]),
+    ///     ByteOrder::LittleEndian,
+    /// );
+    /// ```
+    /// Need to know IFD, Tag, Value and ByteOrder Before Hand
     pub fn set_entry(
         &mut self,
         ifd: IFD,

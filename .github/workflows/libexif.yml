@@ -13,45 +13,25 @@ jobs:
           - x86_64-unknown-linux-gnu
           - x86_64-apple-darwin
           - x86_64-pc-windows-msvc
-          - x86_64-unknown-netbsd
-          - aarch64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
 
         include:
           - os: ubuntu-latest
             name: Linux
             target: x86_64-unknown-linux-gnu
-            cross: false
-            strip: true
 
           - os: macos-latest
             name: macOS
             target: x86_64-apple-darwin
-            cross: false
-            strip: true
 
           - os: windows-latest
             name: Windows
             target: x86_64-pc-windows-msvc
-            cross: false
-            strip: true
 
-          - os: ubuntu-latest
-            name: NetBSD
-            target: x86_64-unknown-netbsd
-            cross: true
-            strip: true
+          - os: windows-latest
+            name: Windows GNU
+            target: x86_64-pc-windows-gnu
 
-          - os: ubuntu-latest
-            name: Android
-            target: aarch64-linux-android
-            cross: true
-            strip: true
-
-          - os: ubuntu-latest
-            name: Linux
-            target: aarch64-unknown-linux-gnu
-            cross: true
-            strip: true
 
     steps:
       - name: Checkout

@@ -1,7 +1,4 @@
-extern crate exif;
-
 use std::env;
-use std::io;
 use std::path::Path;
 
 fn main() {
@@ -11,8 +8,8 @@ fn main() {
     }
 }
 
-fn dump_exif<P: AsRef<Path>>(file_name: P) -> io::Result<()> {
-    let data = exif::Data::open(file_name.as_ref())?;
+fn dump_exif<P: AsRef<Path>>(file_name: P) -> Result<(), libexif::ExifError> {
+    let data = libexif::Data::open(file_name.as_ref())?;
 
     println!("EXIF data for {:?}", file_name.as_ref());
     println!("  Encoding:   {:?}", data.encoding());
@@ -26,7 +23,7 @@ fn dump_exif<P: AsRef<Path>>(file_name: P) -> io::Result<()> {
                 println!(
                     " {:<30} = {}",
                     entry.tag().title(content.ifd()),
-                    entry.text_value()
+                    entry.text_value()?
                 );
             }
         }

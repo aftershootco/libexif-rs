@@ -20,7 +20,7 @@ use crate::internal::*;
 /// The fraction 42/100 is represented by `Rational(42, 100)`:
 ///
 /// ```
-/// let ratio = exif::Rational(42, 100);
+/// let ratio = libexif::Rational(42, 100);
 /// assert_eq!(42, ratio.numerator());
 /// assert_eq!(100, ratio.denominator());
 /// ```

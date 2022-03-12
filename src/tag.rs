@@ -67,7 +67,7 @@ impl Tag {
     }
 }
 
-pub fn create_tag(
+pub(crate) fn create_tag(
     exif: ExifData,
     ifd: impl ToLibExif<ExifIfd>,
     tag: ExifTag,
